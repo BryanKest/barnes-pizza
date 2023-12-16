@@ -1,0 +1,4 @@
+-------------------------------------------------------------------------------
+Test set: be.vives.ti.barnespizza.BarnesPizzaApplicationTests
+-------------------------------------------------------------------------------
+Tests run: 1, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 10.257 s - in be.vives.ti.barnespizza.BarnesPizzaApplicationTests
