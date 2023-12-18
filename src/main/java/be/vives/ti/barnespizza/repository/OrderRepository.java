@@ -4,9 +4,10 @@ import be.vives.ti.barnespizza.domain.Account;
 import be.vives.ti.barnespizza.domain.Order;
 import org.springframework.data.jpa.repository.JpaRepository;
 
+import java.util.List;
 import java.util.Optional;
 
 public interface OrderRepository extends JpaRepository<Order, Integer> {
 
-    Optional<Order> findByAccountId(int accountId);
+    List<Order> findByAccountId(int accountId);
 }

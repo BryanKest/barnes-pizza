@@ -72,9 +72,13 @@ public class AccountController {
     }
 
     @GetMapping("/id/{id}")
-    public AccountResponse getAccountById(@PathVariable("id") Integer id){
-        Account account = accountRepository.findById(id).orElseThrow(() -> new RuntimeException("No account found with id: " +id));
-        return new AccountResponse(account);
+    public ResponseEntity<AccountResponse> getAccountById(@PathVariable("id") Integer id){
+        Account account = accountRepository.findById(id).orElse(null);
+
+        if (account == null) {
+            return new ResponseEntity<>(HttpStatus.NOT_FOUND);
+        }
+        return new ResponseEntity<>(new AccountResponse(account), HttpStatus.OK);
     }
 
     @PostMapping("/create")
@@ -121,7 +125,7 @@ public class AccountController {
     @PatchMapping("/patch/{accountId}")
     public ResponseEntity<AccountResponse> patchAccount(
             @PathVariable("accountId") Integer accountId,
-            @RequestBody AccountUpdateRequest accountUpdateRequest) {
+            @RequestBody @Valid AccountUpdateRequest accountUpdateRequest) {
         Optional<Account> optionalAccount = accountRepository.findById(accountId);
         if (optionalAccount.isPresent()) {
             Account account = optionalAccount.get();

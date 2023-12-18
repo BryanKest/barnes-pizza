@@ -6,7 +6,9 @@ import be.vives.ti.barnespizza.requests.BeverageOrderItemRequest;
 import be.vives.ti.barnespizza.requests.OrderCreateRequest;
 import be.vives.ti.barnespizza.requests.OrderUpdateRequest;
 import be.vives.ti.barnespizza.requests.PizzaOrderItemRequest;
+import be.vives.ti.barnespizza.responses.BeverageOrderResponse;
 import be.vives.ti.barnespizza.responses.OrderResponse;
+import be.vives.ti.barnespizza.responses.PizzaOrderResponse;
 import be.vives.ti.barnespizza.service.OrderService;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
@@ -14,6 +16,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.Collections;
 import java.util.Date;
 import java.util.List;
 import java.util.Optional;
@@ -42,11 +45,11 @@ public class OrderController {
     }
 
     @GetMapping("/account/{id}")
-    public ResponseEntity<OrderResponse> getOrderByAccountId(@PathVariable int id) {
-        Optional<Order> order = orderRepository.findByAccountId(id);
+    public ResponseEntity<List<OrderResponse>> getOrdersByAccountId(@PathVariable int id) {
+        List<Order> orders = orderRepository.findByAccountId(id);
 
-        if (order.isPresent()) {
-            return new ResponseEntity<>(new OrderResponse(order.get()), HttpStatus.OK);
+        if (!orders.isEmpty()) {
+            return new ResponseEntity<>(convertToOrderResponses(orders), HttpStatus.OK);
         } else {
             return new ResponseEntity<>(HttpStatus.NOT_FOUND);
         }
@@ -57,7 +60,7 @@ public class OrderController {
         Optional<Order> order = orderRepository.findById(id);
 
         if (order.isPresent()) {
-            return new ResponseEntity<>(new OrderResponse(order.get()), HttpStatus.OK);
+            return new ResponseEntity<>(convertToOrderResponse(order.get()), HttpStatus.OK);
         } else {
             return new ResponseEntity<>(HttpStatus.NOT_FOUND);
         }
@@ -66,33 +69,26 @@ public class OrderController {
     @PostMapping("/create")
     @Transactional
     public ResponseEntity<OrderResponse> createOrder(@RequestBody OrderCreateRequest orderCreateRequest) {
-        /*          When using the service
-        Order order = orderService.createOrder(orderCreateRequest);
-        return new ResponseEntity<>(new OrderResponse(order), HttpStatus.CREATED);
-        */
-
-        if(orderCreateRequest.getPizzas() == null && orderCreateRequest.getBeverages() == null){
+        if (orderCreateRequest.getPizzas() == null && orderCreateRequest.getBeverages() == null) {
             return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
         }
 
         Account account = accountRepository.findById(orderCreateRequest.getAccountId())
                 .orElse(null);
 
-
-        if(orderCreateRequest.getAccountId() == null || orderCreateRequest.getAddress() == null || account == null){
+        if (orderCreateRequest.getAccountId() == null || orderCreateRequest.getAddress() == null || account == null) {
             return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
         }
 
         Order order = new Order(account, new Date(), orderCreateRequest.getAddress(), 0.0);
         orderRepository.save(order);
 
-        if (orderCreateRequest.getPizzas() != null) {
+        if (orderCreateRequest.getPizzas() != null && !orderCreateRequest.getPizzas().isEmpty()) {
             for (PizzaOrderItemRequest pizzaRequest : orderCreateRequest.getPizzas()) {
-                if(pizzaRequest.getPizzaSize() == null){
+                Pizza pizza = pizzaRepository.findById(pizzaRequest.getPizzaId()).orElse(null);
+                if (pizzaRequest.getPizzaSize() == null || pizza == null) {
                     return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
                 }
-                Pizza pizza = pizzaRepository.findById(pizzaRequest.getPizzaId())
-                        .orElseThrow(() -> new RuntimeException("Pizza not found with id: " + pizzaRequest.getPizzaId()));
                 if(pizzaRequest.getPizzaSize().equals("small")){
                     pizza.setSize(Pizza.PizzaSize.SMALL);
                 }
@@ -107,35 +103,27 @@ public class OrderController {
                 }
                 PizzaOrderItem pizzaOrderItem = new PizzaOrderItem(order, pizzaRequest.getAmount(), pizza);
                 pizzaOrderItemRepository.save(pizzaOrderItem);
-                if(order.getPizzaOrderItems() != null){
-                    order.getPizzaOrderItems().add(pizzaOrderItem);
-                }
-                else {
-                    order.setPizzaOrderItems(List.of(pizzaOrderItem));
-                }
+                order.getPizzaOrderItems().add(pizzaOrderItem);
             }
         }
 
-        if (orderCreateRequest.getBeverages() != null) {
+        if (orderCreateRequest.getBeverages() != null && !orderCreateRequest.getBeverages().isEmpty()) {
             for (BeverageOrderItemRequest beverageRequest : orderCreateRequest.getBeverages()) {
                 Beverage beverage = beverageRepository.findById(beverageRequest.getBeverageId())
-                        .orElseThrow(() -> new RuntimeException("Beverage not found with id: " + beverageRequest.getBeverageId()));
+                        .orElse(null);
+                if (beverage == null) {
+                    return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
+                }
                 BeverageOrderItem beverageOrderItem = new BeverageOrderItem(order, beverageRequest.getAmount(), beverage);
                 beverageOrderItemRepository.save(beverageOrderItem);
-                if(order.getBeverageOrderItems() != null){
-                    order.getBeverageOrderItems().add(beverageOrderItem);
-                }
-                else {
-                    order.setBeverageOrderItems(List.of(beverageOrderItem));
-                }
+                order.getBeverageOrderItems().add(beverageOrderItem);
             }
         }
 
         order.setTotalPrice(calculateTotalPrice(order));
         orderRepository.save(order);
 
-        return new ResponseEntity<>(new OrderResponse(order), HttpStatus.CREATED);
-
+        return new ResponseEntity<>(convertToOrderResponse(order), HttpStatus.CREATED);
     }
 
     private Double calculateTotalPrice(Order order) {
@@ -156,43 +144,56 @@ public class OrderController {
     }
 
     @PutMapping("/update/{orderId}")
-    public ResponseEntity<OrderResponse> updateOrder(@PathVariable("orderId") int orderId, @RequestBody @Valid OrderUpdateRequest orderUpdateRequest) {
+    @Transactional
+    public ResponseEntity<OrderResponse> updateOrder(@PathVariable("orderId") Integer orderId, @Valid @RequestBody OrderUpdateRequest orderUpdateRequest) {
+        Optional<Order> orderOptional = orderRepository.findById(orderId);
+        if (orderOptional.isPresent()) {
+            Order order = orderOptional.get();
 
-        if(orderUpdateRequest.getAccountId() == null || orderUpdateRequest.getAddress() == null){
-            return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
-        }
-        Optional<Order> order = orderRepository.findById(orderId);
+            order.getPizzaOrderItems().clear();
+            order.getBeverageOrderItems().clear();
 
-        if(orderUpdateRequest.getPizzas() == null && orderUpdateRequest.getBeverages() == null){
-            return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
-        }
-
-        if (order.isPresent()) {
-            if(orderUpdateRequest.getPizzas() !=null){
-                for(PizzaOrderItemRequest pizzaRequest : orderUpdateRequest.getPizzas()) {
-                    Pizza pizza = pizzaRepository.findById(pizzaRequest.getPizzaId())
-                            .orElseThrow(() -> new RuntimeException("Pizza not found with id: " + pizzaRequest.getPizzaId()));
-                    PizzaOrderItem pizzaOrderItem = new PizzaOrderItem(order.get(), pizzaRequest.getAmount(), pizza);
+            if (orderUpdateRequest.getPizzas() != null && !orderUpdateRequest.getPizzas().isEmpty()) {
+                for (PizzaOrderItemRequest pizzaRequest : orderUpdateRequest.getPizzas()) {
+                    Pizza pizza = pizzaRepository.findById(pizzaRequest.getPizzaId()).orElse(null);
+                    if (pizzaRequest.getPizzaSize() == null || pizza == null) {
+                        return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
+                    }
+                    if(pizzaRequest.getPizzaSize().equals("small")){
+                        pizza.setSize(Pizza.PizzaSize.SMALL);
+                    }
+                    else if(pizzaRequest.getPizzaSize().equals("medium")){
+                        pizza.setSize(Pizza.PizzaSize.MEDIUM);
+                    }
+                    else if(pizzaRequest.getPizzaSize().equals("large")){
+                        pizza.setSize(Pizza.PizzaSize.LARGE);
+                    }
+                    else {
+                        return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
+                    }
+                    PizzaOrderItem pizzaOrderItem = new PizzaOrderItem(order, pizzaRequest.getAmount(), pizza);
                     pizzaOrderItemRepository.save(pizzaOrderItem);
-                    order.get().setPizzaOrderItems(List.of(pizzaOrderItem));
+                    order.getPizzaOrderItems().add(pizzaOrderItem);
                 }
             }
 
-            if(orderUpdateRequest.getBeverages() !=null){
-                for(BeverageOrderItemRequest beverageRequest : orderUpdateRequest.getBeverages()) {
+            if (orderUpdateRequest.getBeverages() != null && !orderUpdateRequest.getBeverages().isEmpty()) {
+                for (BeverageOrderItemRequest beverageRequest : orderUpdateRequest.getBeverages()) {
                     Beverage beverage = beverageRepository.findById(beverageRequest.getBeverageId())
-                            .orElseThrow(() -> new RuntimeException("Beverage not found with id: " + beverageRequest.getBeverageId()));
-                    BeverageOrderItem beverageOrderItem = new BeverageOrderItem(order.get(), beverageRequest.getAmount(), beverage);
+                            .orElse(null);
+                    if (beverage == null) {
+                        return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
+                    }
+                    BeverageOrderItem beverageOrderItem = new BeverageOrderItem(order, beverageRequest.getAmount(), beverage);
                     beverageOrderItemRepository.save(beverageOrderItem);
-                    order.get().setBeverageOrderItems(List.of(beverageOrderItem));
+                    order.getBeverageOrderItems().add(beverageOrderItem);
                 }
             }
 
-            order.get().setAddress(orderUpdateRequest.getAddress());
-            order.get().setOrderTime(new Date());
-            order.get().setTotalPrice(calculateTotalPrice(order.get()));
-            orderRepository.save(order.get());
-            return new ResponseEntity<>(new OrderResponse(order.get()), HttpStatus.OK);
+            order.setTotalPrice(calculateTotalPrice(order));
+            orderRepository.save(order);
+
+            return new ResponseEntity<>(convertToOrderResponse(order), HttpStatus.OK);
         } else {
             return new ResponseEntity<>(HttpStatus.NOT_FOUND);
         }
@@ -207,5 +208,48 @@ public class OrderController {
         } else {
             return new ResponseEntity<>(HttpStatus.NOT_FOUND);
         }
+    }
+
+    private OrderResponse convertToOrderResponse(Order order) {
+        return new OrderResponse(
+                order.getId(),
+                order.getAccount(),
+                convertPizzaOrderItems(order.getPizzaOrderItems()),
+                convertBeverageOrderItems(order.getBeverageOrderItems()),
+                order.getOrderTime(),
+                order.getAddress(),
+                order.getTotalPrice()
+        );
+    }
+    private List<OrderResponse> convertToOrderResponses(List<Order> orders) {
+        return Optional.ofNullable(orders)
+                .orElse(Collections.emptyList())
+                .stream()
+                .map(order -> new OrderResponse(
+                        order.getId(),
+                        order.getAccount(),
+                        convertPizzaOrderItems(order.getPizzaOrderItems()),
+                        convertBeverageOrderItems(order.getBeverageOrderItems()),
+                        order.getOrderTime(),
+                        order.getAddress(),
+                        order.getTotalPrice()
+                ))
+                .toList();
+    }
+
+    private List<PizzaOrderResponse> convertPizzaOrderItems(List<PizzaOrderItem> pizzaOrderItems) {
+        return Optional.ofNullable(pizzaOrderItems)
+                .orElse(Collections.emptyList())
+                .stream()
+                .map(pizzaOrderItem -> new PizzaOrderResponse(pizzaOrderItem.getPizza(), pizzaOrderItem.getAmount()))
+                .toList();
+    }
+
+    private List<BeverageOrderResponse> convertBeverageOrderItems(List<BeverageOrderItem> beverageOrderItems) {
+        return Optional.ofNullable(beverageOrderItems)
+                .orElse(Collections.emptyList())
+                .stream()
+                .map(beverageOrderItem -> new BeverageOrderResponse(beverageOrderItem.getBeverage(), beverageOrderItem.getAmount()))
+                .toList();
     }
 }

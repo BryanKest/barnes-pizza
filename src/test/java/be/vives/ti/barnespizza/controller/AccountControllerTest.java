@@ -44,7 +44,7 @@ class AccountControllerTest {
 
     @BeforeEach
     void setUp() {
-        user1 = new Account("user1", "password1", "Bryan", "Kesteloot", "Straat", "047123456");
+        user1 = new Account("user@gmail.com", "Strongpassword1@!", "Bryan", "Kesteloot", "Straat", "0471234567");
         user2 = new Account("user2", "password2", "Jos", "Dammen", "Straat", "047123456");
         user3 = new Account("user3", "password3", "Brittney", "Barnes", "Straat", "047123456");
         user4 = new Account("user4", "password3", "Bryan", "De vos", "Straat", "047123456");
@@ -58,7 +58,7 @@ class AccountControllerTest {
                 .andDo(print())
                 .andExpect(status().isOk())
                 .andExpect(content().contentTypeCompatibleWith(MediaType.APPLICATION_JSON))
-                .andExpect(jsonPath("$.[0].email").value("user1"))
+                .andExpect(jsonPath("$.[0].email").value("user@gmail.com"))
                 .andExpect(jsonPath("$.[1].email").value("user2"))
                 .andExpect(jsonPath("$.[2].email").value("user3"));
     }
@@ -72,12 +72,12 @@ class AccountControllerTest {
                 .andDo(print())
                 .andExpect(status().isOk())
                 .andExpect(content().contentTypeCompatibleWith(MediaType.APPLICATION_JSON))
-                .andExpect(jsonPath("$.email").value("user1"))
-                .andExpect(jsonPath("$.password").value("password1"))
+                .andExpect(jsonPath("$.email").value("user@gmail.com"))
+                .andExpect(jsonPath("$.password").value("Strongpassword1@!"))
                 .andExpect(jsonPath("$.fname").value("Bryan"))
                 .andExpect(jsonPath("$.name").value("Kesteloot"))
                 .andExpect(jsonPath("$.address").value("Straat"))
-                .andExpect(jsonPath("$.phone").value("047123456"));
+                .andExpect(jsonPath("$.phone").value("0471234567"));
     }
 
     @Test
@@ -88,12 +88,12 @@ class AccountControllerTest {
                 .andDo(print())
                 .andExpect(status().isOk())
                 .andExpect(content().contentTypeCompatibleWith(MediaType.APPLICATION_JSON))
-                .andExpect(jsonPath("$.[0].email").value("user1"))
-                .andExpect(jsonPath("$.[0].password").value("password1"))
+                .andExpect(jsonPath("$.[0].email").value("user@gmail.com"))
+                .andExpect(jsonPath("$.[0].password").value("Strongpassword1@!"))
                 .andExpect(jsonPath("$.[0].fname").value("Bryan"))
                 .andExpect(jsonPath("$.[0].name").value("Kesteloot"))
                 .andExpect(jsonPath("$.[0].address").value("Straat"))
-                .andExpect(jsonPath("$.[0].phone").value("047123456"))
+                .andExpect(jsonPath("$.[0].phone").value("0471234567"))
                 .andExpect(jsonPath("$.[1].email").value("user4"))
                 .andExpect(jsonPath("$.[1].password").value("password3"))
                 .andExpect(jsonPath("$.[1].fname").value("Bryan"))
@@ -110,12 +110,12 @@ class AccountControllerTest {
                 .andDo(print())
                 .andExpect(status().isOk())
                 .andExpect(content().contentTypeCompatibleWith(MediaType.APPLICATION_JSON))
-                .andExpect(jsonPath("$.[0].email").value("user1"))
-                .andExpect(jsonPath("$.[0].password").value("password1"))
+                .andExpect(jsonPath("$.[0].email").value("user@gmail.com"))
+                .andExpect(jsonPath("$.[0].password").value("Strongpassword1@!"))
                 .andExpect(jsonPath("$.[0].fname").value("Bryan"))
                 .andExpect(jsonPath("$.[0].name").value("Kesteloot"))
                 .andExpect(jsonPath("$.[0].address").value("Straat"))
-                .andExpect(jsonPath("$.[0].phone").value("047123456"))
+                .andExpect(jsonPath("$.[0].phone").value("0471234567"))
                 .andExpect(jsonPath("$.[1].email").value("user4"))
                 .andExpect(jsonPath("$.[1].password").value("password3"))
                 .andExpect(jsonPath("$.[1].fname").value("Bryan"))
@@ -174,12 +174,12 @@ class AccountControllerTest {
         when(accountRepository.save(any(Account.class))).thenReturn(user1);
 
         AccountCreateRequest request = new AccountCreateRequest();
-        request.setEmail("test@example.com");
-        request.setPassword("password123");
+        request.setEmail("johnDoe@gmail.com");
+        request.setPassword("StrongPass123@!");
         request.setFname("John");
         request.setName("Doe");
         request.setAddress("123 Street");
-        request.setPhone("123456789");
+        request.setPhone("0412345678");
 
         mvc.perform(post("/account/create")
                         .contentType(MediaType.APPLICATION_JSON)
@@ -225,13 +225,18 @@ class AccountControllerTest {
 
     @Test
     void updateAccount() throws Exception {
-        AccountUpdateRequest request = new AccountUpdateRequest();
+        AccountUpdateRequest request =  new AccountUpdateRequest();
+        request.setEmail("user1@gmail.com");
+        request.setPassword("Strongpassword@10!");
         request.setFname("UpdatedFirstName");
+        request.setName("kesteloot");
         request.setAddress("UpdatedAddress");
+        request.setPhone("0471234567");
+
 
         Integer accountId = 123;
         when(accountRepository.findById(accountId)).thenReturn(Optional.of(user1));
-        Account updatedAccount = new Account("user1", "password1", "UpdatedFirstName", "kesteloot", "UpdatedAddress", "047123456");
+        Account updatedAccount = new Account("user1@gmail.com", "Strongpassword@10!", "UpdatedFirstName", "kesteloot", "UpdatedAddress", "0471234567");
         when(accountRepository.save(any())).thenReturn(updatedAccount);
 
         mvc.perform(put("/account/put/{id}", accountId)
@@ -256,7 +261,7 @@ class AccountControllerTest {
                         .content(objectMapper.writeValueAsString(request))
                         .accept(MediaType.APPLICATION_JSON_VALUE)
                         .contentType(MediaType.APPLICATION_JSON_VALUE))
-                .andExpect(status().isNotFound());
+                .andExpect(status().isBadRequest());
     }
 
     @Test
@@ -272,21 +277,26 @@ class AccountControllerTest {
                         .content(objectMapper.writeValueAsString(request))
                         .accept(MediaType.APPLICATION_JSON_VALUE)
                         .contentType(MediaType.APPLICATION_JSON_VALUE))
-                .andExpect(status().isNotFound());
+                .andExpect(status().isBadRequest());
     }
 
     @Test
     void patchAccount() throws Exception {
-        AccountUpdateRequest request = new AccountUpdateRequest();
+        AccountUpdateRequest request =  new AccountUpdateRequest();
+        request.setEmail("user1@gmail.com");
+        request.setPassword("Strongpassword@10!");
         request.setFname("UpdatedFirstName");
+        request.setName("kesteloot");
         request.setAddress("UpdatedAddress");
+        request.setPhone("0471234567");
+
 
         Integer accountId = 123;
         when(accountRepository.findById(accountId)).thenReturn(Optional.of(user1));
-        Account updatedAccount = new Account("user1", "password1", "UpdatedFirstName", "kesteloot", "UpdatedAddress", "047123456");
+        Account updatedAccount = new Account("user1@gmail.com", "Strongpassword@10!", "UpdatedFirstName", "kesteloot", "UpdatedAddress", "0471234567");
         when(accountRepository.save(any())).thenReturn(updatedAccount);
 
-        mvc.perform(patch("/account/patch/{id}", accountId)
+        mvc.perform(patch("/account/patch/{accountId}", accountId)
                         .content(objectMapper.writeValueAsString(request))
                         .accept(MediaType.APPLICATION_JSON_VALUE)
                         .contentType(MediaType.APPLICATION_JSON_VALUE))
@@ -297,15 +307,20 @@ class AccountControllerTest {
 
     @Test
     void patchAccount_AccountNotFound() throws Exception {
-        AccountUpdateRequest request = new AccountUpdateRequest();
+        AccountUpdateRequest request =  new AccountUpdateRequest();
+        request.setEmail("user1@gmail.com");
+        request.setPassword("Strongpassword@10!");
         request.setFname("UpdatedFirstName");
+        request.setName("kesteloot");
         request.setAddress("UpdatedAddress");
+        request.setPhone("0471234567");
+
 
         Integer accountId = 123;
         when(accountRepository.findById(accountId)).thenReturn(Optional.empty());
         verifyNoMoreInteractions(accountRepository);
 
-        mvc.perform(patch("/account/patch/{id}", accountId)
+        mvc.perform(patch("/account/patch/{id}", 400)
                         .content(objectMapper.writeValueAsString(request))
                         .accept(MediaType.APPLICATION_JSON_VALUE)
                         .contentType(MediaType.APPLICATION_JSON_VALUE))
@@ -325,7 +340,7 @@ class AccountControllerTest {
                         .content(objectMapper.writeValueAsString(request))
                         .accept(MediaType.APPLICATION_JSON_VALUE)
                         .contentType(MediaType.APPLICATION_JSON_VALUE))
-                .andExpect(status().isNotFound());
+                .andExpect(status().isBadRequest());
     }
 
     @Test

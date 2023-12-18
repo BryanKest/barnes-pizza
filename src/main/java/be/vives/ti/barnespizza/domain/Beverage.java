@@ -2,6 +2,7 @@ package be.vives.ti.barnespizza.domain;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import com.fasterxml.jackson.annotation.JsonManagedReference;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
@@ -26,7 +27,6 @@ public class Beverage {
 
     @Transient
     @OneToOne
-    @JsonIgnoreProperties("beverageOrderItem")
     private BeverageOrderItem beverageOrderItem;
     protected Beverage(){
 

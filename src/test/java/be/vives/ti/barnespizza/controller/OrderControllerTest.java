@@ -103,23 +103,23 @@ class OrderControllerTest {
 
     @Test
     void getOrderByAccountId() throws Exception {
-        when(orderRepository.findByAccountId(1)).thenReturn(Optional.ofNullable(order1));
+        when(orderRepository.findByAccountId(1)).thenReturn(List.of(order1));
 
         mvc.perform(get("/order/account/1")
                 .contentType(MediaType.APPLICATION_JSON))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.account.email").value("user1"))
-                .andExpect(jsonPath("$.pizzaOrderItems[0].amount").value(2))
-                .andExpect(jsonPath("$.pizzaOrderItems[0].pizza.name").value("Hawaii"))
-                .andExpect(jsonPath("$.pizzaOrderItems[1]").doesNotExist()) // Check that there is no second element
-                .andExpect(jsonPath("$.address").value("Straat"))
-                .andExpect(jsonPath("$.totalPrice").value(20.0))
+                .andExpect(jsonPath("$[0].account.email").value("user1"))
+                .andExpect(jsonPath("$[0].pizzaOrderItems[0].amount").value(2))
+                .andExpect(jsonPath("$[0].pizzaOrderItems[0].name").value("Hawaii"))
+                .andExpect(jsonPath("$[0].pizzaOrderItems[1]").doesNotExist()) // Check that there is no second element
+                .andExpect(jsonPath("$[0].address").value("Straat"))
+                .andExpect(jsonPath("$[0].totalPrice").value(20.0))
                 .andDo(print());
     }
 
     @Test
     void getOrderByAccountIdNotFound() throws Exception {
-        when(orderRepository.findByAccountId(1)).thenReturn(Optional.empty());
+        when(orderRepository.findByAccountId(1)).thenReturn(List.of());
 
         mvc.perform(get("/order/account/1")
                 .contentType(MediaType.APPLICATION_JSON))
@@ -136,7 +136,7 @@ class OrderControllerTest {
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.account.email").value("user1"))
                 .andExpect(jsonPath("$.pizzaOrderItems[0].amount").value(2))
-                .andExpect(jsonPath("$.pizzaOrderItems[0].pizza.name").value("Hawaii"))
+                .andExpect(jsonPath("$.pizzaOrderItems[0].name").value("Hawaii"))
                 .andExpect(jsonPath("$.pizzaOrderItems[1]").doesNotExist()) // Check that there is no second element
                 .andExpect(jsonPath("$.address").value("Straat"))
                 .andExpect(jsonPath("$.totalPrice").value(20.0))
@@ -185,7 +185,7 @@ class OrderControllerTest {
                 .andExpect(jsonPath("$.account.email").value("user1"))
                 .andExpect(jsonPath("$.pizzaOrderItems[0].amount").value(2))
                 .andExpect(jsonPath("$.pizzaOrderItems[0].amount").value(2))
-                .andExpect(jsonPath("$.pizzaOrderItems[0].pizza.name").value("Hawaii"))
+                .andExpect(jsonPath("$.pizzaOrderItems[0].name").value("Hawaii"))
                 .andExpect(jsonPath("$.pizzaOrderItems[1]").doesNotExist()) // Check that there is no second element
                 .andExpect(jsonPath("$.address").value("Straat"))
                 .andExpect(jsonPath("$.totalPrice").value(25.0))
@@ -217,7 +217,7 @@ class OrderControllerTest {
                 .andExpect(jsonPath("$.account.email").value("user1"))
                 .andExpect(jsonPath("$.pizzaOrderItems[0]").doesNotExist()) // Check that there is no second element
                 .andExpect(jsonPath("$.beverageOrderItems[0].amount").value(2))
-                .andExpect(jsonPath("$.beverageOrderItems[0].beverage.name").value("Cola"))
+                .andExpect(jsonPath("$.beverageOrderItems[0].name").value("Cola"))
                 .andExpect(jsonPath("$.address").value("Straat"))
                 .andDo(print());
     }
@@ -246,7 +246,7 @@ class OrderControllerTest {
                 .andExpect(status().isCreated())
                 .andExpect(jsonPath("$.account.email").value("user1"))
                 .andExpect(jsonPath("$.pizzaOrderItems[0].amount").value(2))
-                .andExpect(jsonPath("$.pizzaOrderItems[0].pizza.name").value("Hawaii"))
+                .andExpect(jsonPath("$.pizzaOrderItems[0].name").value("Hawaii"))
                 .andExpect(jsonPath("$.beverageOrderItems[0]").doesNotExist()) // Check that there is no second element
                 .andExpect(jsonPath("$.address").value("Straat"))
                 .andDo(print());
@@ -387,7 +387,7 @@ class OrderControllerTest {
                 .andExpect(jsonPath("$.account.email").value("user1"))
                 .andExpect(jsonPath("$.pizzaOrderItems[0].amount").value(2))
                 .andExpect(jsonPath("$.pizzaOrderItems[0].amount").value(2))
-                .andExpect(jsonPath("$.pizzaOrderItems[0].pizza.name").value("Hawaii"))
+                .andExpect(jsonPath("$.pizzaOrderItems[0].name").value("Hawaii"))
                 .andExpect(jsonPath("$.pizzaOrderItems[1]").doesNotExist()) // Check that there is no second element
                 .andExpect(jsonPath("$.address").value("Straat"))
                 .andExpect(jsonPath("$.totalPrice").value(25.0))
@@ -400,7 +400,7 @@ class OrderControllerTest {
                 .andExpect(jsonPath("$.account.email").value("user2"))
                 .andExpect(jsonPath("$.pizzaOrderItems[0].amount").value(1))
                 .andExpect(jsonPath("$.pizzaOrderItems[0].amount").value(1))
-                .andExpect(jsonPath("$.pizzaOrderItems[0].pizza.name").value("Hawaii"))
+                .andExpect(jsonPath("$.pizzaOrderItems[0].name").value("Hawaii"))
                 .andExpect(jsonPath("$.pizzaOrderItems[1]").doesNotExist()) // Check that there is no second element
                 .andExpect(jsonPath("$.address").value("Straat"))
                 .andExpect(jsonPath("$.totalPrice").value(10.0))
@@ -422,6 +422,7 @@ class OrderControllerTest {
 
         PizzaOrderItemRequest pizzaOrderItemRequest = new PizzaOrderItemRequest();
         pizzaOrderItemRequest.setAmount(2);
+        pizzaOrderItemRequest.setPizzaSize("large");
         pizzaOrderItemRequest.setPizzaId(1);
 
         OrderUpdateRequest orderUpdateRequest = new OrderUpdateRequest();
@@ -436,9 +437,9 @@ class OrderControllerTest {
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.account.email").value("user1"))
                 .andExpect(jsonPath("$.pizzaOrderItems[0].amount").value(2))
-                .andExpect(jsonPath("$.pizzaOrderItems[0].pizza.name").value("Hawaii"))
+                .andExpect(jsonPath("$.pizzaOrderItems[0].name").value("Hawaii"))
                 .andExpect(jsonPath("$.beverageOrderItems[0].amount").value(2))
-                .andExpect(jsonPath("$.beverageOrderItems[0].beverage.name").value("Cola"))
+                .andExpect(jsonPath("$.beverageOrderItems[0].name").value("Cola"))
                 .andExpect(jsonPath("$.address").value("Straat"))
                 .andDo(print());
     }
@@ -471,7 +472,7 @@ class OrderControllerTest {
                 .andExpect(jsonPath("$.account.email").value("user1"))
                 .andExpect(jsonPath("$.pizzaOrderItems[0]").doesNotExist())
                 .andExpect(jsonPath("$.beverageOrderItems[0].amount").value(2))
-                .andExpect(jsonPath("$.beverageOrderItems[0].beverage.name").value("Cola"))
+                .andExpect(jsonPath("$.beverageOrderItems[0].name").value("Cola"))
                 .andExpect(jsonPath("$.address").value("Straat"))
                 .andDo(print());
 
@@ -492,6 +493,7 @@ class OrderControllerTest {
         PizzaOrderItemRequest pizzaOrderItemRequest = new PizzaOrderItemRequest();
         pizzaOrderItemRequest.setAmount(2);
         pizzaOrderItemRequest.setPizzaId(1);
+        pizzaOrderItemRequest.setPizzaSize("large");
 
         OrderUpdateRequest orderUpdateRequest = new OrderUpdateRequest();
         orderUpdateRequest.setAccountId(1);
@@ -504,7 +506,7 @@ class OrderControllerTest {
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.account.email").value("user1"))
                 .andExpect(jsonPath("$.pizzaOrderItems[0].amount").value(2))
-                .andExpect(jsonPath("$.pizzaOrderItems[0].pizza.name").value("Hawaii"))
+                .andExpect(jsonPath("$.pizzaOrderItems[0].name").value("Hawaii"))
                 .andExpect(jsonPath("$.beverageOrderItems[0]").doesNotExist())
                 .andExpect(jsonPath("$.address").value("Straat"))
                 .andDo(print());

@@ -15,9 +15,9 @@ public class OrderResponse {
 
     private Account account;
 
-    private List<PizzaOrderItem> pizzaOrderItems;
+    private Optional<List<PizzaOrderResponse>> pizzaOrderItems;
 
-    private List<BeverageOrderItem> beverageOrderItems;
+    private Optional<List<BeverageOrderResponse>> beverageOrderItems;
 
     private Date orderTime;
 
@@ -25,14 +25,14 @@ public class OrderResponse {
 
     private Double totalPrice;
 
-    public OrderResponse(Order order) {
-        this.id = order.getId();
-        this.account = order.getAccount();
-        this.pizzaOrderItems = order.getPizzaOrderItems();
-        this.beverageOrderItems = order.getBeverageOrderItems();
-        this.orderTime = order.getOrderTime();
-        this.address = order.getAddress();
-        this.totalPrice = order.getTotalPrice();
+    public OrderResponse(Integer id, Account account, List<PizzaOrderResponse> pizzaOrderItems, List<BeverageOrderResponse> beverageOrderItems, Date orderTime, String address, Double totalPrice) {
+        this.id = id;
+        this.account = account;
+        this.pizzaOrderItems = Optional.ofNullable(pizzaOrderItems);
+        this.beverageOrderItems = Optional.ofNullable(beverageOrderItems);
+        this.orderTime = orderTime;
+        this.address = address;
+        this.totalPrice = totalPrice;
     }
 
     public Integer getId() {
@@ -43,11 +43,11 @@ public class OrderResponse {
         return account;
     }
 
-    public List<PizzaOrderItem> getPizzaOrderItems() {
+    public Optional<List<PizzaOrderResponse>> getPizzaOrderItems() {
         return pizzaOrderItems;
     }
 
-    public List<BeverageOrderItem> getBeverageOrderItems() {
+    public Optional<List<BeverageOrderResponse>> getBeverageOrderItems() {
         return beverageOrderItems;
     }
 

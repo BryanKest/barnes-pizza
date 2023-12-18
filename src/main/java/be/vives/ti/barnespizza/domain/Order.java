@@ -1,9 +1,13 @@
 package be.vives.ti.barnespizza.domain;
 
 import com.fasterxml.jackson.annotation.JsonBackReference;
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonManagedReference;
 import jakarta.persistence.*;
+import jakarta.validation.constraints.NotEmpty;
 import jakarta.validation.constraints.NotNull;
 
+import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 
@@ -20,17 +24,19 @@ public class Order {
     @JoinColumn(name = "account_id")
     private Account account;
 
-    @OneToMany(mappedBy = "order", cascade = CascadeType.ALL)
-    @JsonBackReference
-    private List<PizzaOrderItem> pizzaOrderItems;
+    @JsonManagedReference
+    @OneToMany(mappedBy = "order", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<PizzaOrderItem> pizzaOrderItems = new ArrayList<>();
 
-    @OneToMany(mappedBy = "order", cascade = CascadeType.ALL)
-    @JsonBackReference
-    private List<BeverageOrderItem> beverageOrderItems;
+    @JsonManagedReference
+    @OneToMany(mappedBy = "order", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<BeverageOrderItem> beverageOrderItems = new ArrayList<>();
+
 
     @Temporal(TemporalType.TIMESTAMP)
     private Date orderTime;
 
+    @NotEmpty(message = "Address must not be empty")
     private String address;
 
     private Double totalPrice;
