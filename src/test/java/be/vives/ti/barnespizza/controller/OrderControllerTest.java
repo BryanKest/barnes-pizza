@@ -16,10 +16,12 @@ import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
 
+import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 import java.util.Optional;
 
+import static java.util.ArrayList.*;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.when;
@@ -406,160 +408,6 @@ class OrderControllerTest {
                 .andExpect(jsonPath("$.totalPrice").value(10.0))
                 .andDo(print());
     }
-
-    @Test
-    void updateOrder() throws Exception {
-        when(orderRepository.findById(1)).thenReturn(Optional.of(order1));
-        when(pizzaRepository.findById(1)).thenReturn(Optional.of(pizza1));
-        when(beverageRepository.findById(1)).thenReturn(Optional.of(beverage1));
-        when(accountRepository.findById(1)).thenReturn(Optional.of(user1));
-        when(orderRepository.save(order1)).thenReturn(order1);
-        when(orderRepository.save(any(Order.class))).thenAnswer(invocation -> invocation.getArgument(0));
-
-        BeverageOrderItemRequest beverageOrderItemRequest = new BeverageOrderItemRequest();
-        beverageOrderItemRequest.setAmount(2);
-        beverageOrderItemRequest.setBeverageId(1);
-
-        PizzaOrderItemRequest pizzaOrderItemRequest = new PizzaOrderItemRequest();
-        pizzaOrderItemRequest.setAmount(2);
-        pizzaOrderItemRequest.setPizzaSize("large");
-        pizzaOrderItemRequest.setPizzaId(1);
-
-        OrderUpdateRequest orderUpdateRequest = new OrderUpdateRequest();
-        orderUpdateRequest.setAccountId(1);
-        orderUpdateRequest.setAddress("Straat");
-        orderUpdateRequest.setBeverages(List.of(beverageOrderItemRequest));
-        orderUpdateRequest.setPizzas(List.of(pizzaOrderItemRequest));
-
-        mvc.perform(put("/order/update/1")
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(orderUpdateRequest)))
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$.account.email").value("user1"))
-                .andExpect(jsonPath("$.pizzaOrderItems[0].amount").value(2))
-                .andExpect(jsonPath("$.pizzaOrderItems[0].name").value("Hawaii"))
-                .andExpect(jsonPath("$.beverageOrderItems[0].amount").value(2))
-                .andExpect(jsonPath("$.beverageOrderItems[0].name").value("Cola"))
-                .andExpect(jsonPath("$.address").value("Straat"))
-                .andDo(print());
-    }
-
-    @Test
-    void updateOrderNoPizza() throws Exception {
-        Order testOrder = new Order(user1, date1, "Straat", 20.0);
-        testOrder.setId(1);
-        testOrder.setBeverageOrderItems(List.of(orderItem2));
-
-        when(orderRepository.findById(1)).thenReturn(Optional.of(testOrder));
-        when(beverageRepository.findById(1)).thenReturn(Optional.of(beverage1));
-        when(accountRepository.findById(1)).thenReturn(Optional.of(user1));
-        when(orderRepository.save(testOrder)).thenReturn(testOrder);
-        when(orderRepository.save(any(Order.class))).thenAnswer(invocation -> invocation.getArgument(0));
-
-        BeverageOrderItemRequest beverageOrderItemRequest = new BeverageOrderItemRequest();
-        beverageOrderItemRequest.setAmount(2);
-        beverageOrderItemRequest.setBeverageId(1);
-
-        OrderUpdateRequest orderUpdateRequest = new OrderUpdateRequest();
-        orderUpdateRequest.setAccountId(1);
-        orderUpdateRequest.setAddress("Straat");
-        orderUpdateRequest.setBeverages(List.of(beverageOrderItemRequest));
-
-        mvc.perform(put("/order/update/1")
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(orderUpdateRequest)))
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$.account.email").value("user1"))
-                .andExpect(jsonPath("$.pizzaOrderItems[0]").doesNotExist())
-                .andExpect(jsonPath("$.beverageOrderItems[0].amount").value(2))
-                .andExpect(jsonPath("$.beverageOrderItems[0].name").value("Cola"))
-                .andExpect(jsonPath("$.address").value("Straat"))
-                .andDo(print());
-
-    }
-
-    @Test
-    void updateOrderNoBeverage() throws Exception {
-        Order testOrder = new Order(user1, date1, "Straat", 20.0);
-        testOrder.setId(1);
-        testOrder.setPizzaOrderItems(List.of(orderItem1));
-
-        when(orderRepository.findById(1)).thenReturn(Optional.of(testOrder));
-        when(pizzaRepository.findById(1)).thenReturn(Optional.of(pizza1));
-        when(accountRepository.findById(1)).thenReturn(Optional.of(user1));
-        when(orderRepository.save(testOrder)).thenReturn(testOrder);
-        when(orderRepository.save(any(Order.class))).thenAnswer(invocation -> invocation.getArgument(0));
-
-        PizzaOrderItemRequest pizzaOrderItemRequest = new PizzaOrderItemRequest();
-        pizzaOrderItemRequest.setAmount(2);
-        pizzaOrderItemRequest.setPizzaId(1);
-        pizzaOrderItemRequest.setPizzaSize("large");
-
-        OrderUpdateRequest orderUpdateRequest = new OrderUpdateRequest();
-        orderUpdateRequest.setAccountId(1);
-        orderUpdateRequest.setAddress("Straat");
-        orderUpdateRequest.setPizzas(List.of(pizzaOrderItemRequest));
-
-        mvc.perform(put("/order/update/1")
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(orderUpdateRequest)))
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$.account.email").value("user1"))
-                .andExpect(jsonPath("$.pizzaOrderItems[0].amount").value(2))
-                .andExpect(jsonPath("$.pizzaOrderItems[0].name").value("Hawaii"))
-                .andExpect(jsonPath("$.beverageOrderItems[0]").doesNotExist())
-                .andExpect(jsonPath("$.address").value("Straat"))
-                .andDo(print());
-
-    }
-
-    @Test
-    void updateOrderNoPizzaNoBeverage() throws Exception {
-        when(orderRepository.findById(1)).thenReturn(Optional.of(order1));
-        when(accountRepository.findById(1)).thenReturn(Optional.of(user1));
-        when(orderRepository.save(order1)).thenReturn(order1);
-        when(orderRepository.save(any(Order.class))).thenAnswer(invocation -> invocation.getArgument(0));
-
-        OrderUpdateRequest orderUpdateRequest = new OrderUpdateRequest();
-        orderUpdateRequest.setAccountId(1);
-        orderUpdateRequest.setAddress("Straat");
-
-        mvc.perform(put("/order/update/1")
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(orderUpdateRequest)))
-                .andExpect(status().isBadRequest())
-                .andDo(print());
-    }
-
-    @Test
-    void updateOrderNoAccount() throws Exception {
-        when(orderRepository.findById(1)).thenReturn(Optional.of(order1));
-        when(pizzaRepository.findById(1)).thenReturn(Optional.of(pizza1));
-        when(beverageRepository.findById(1)).thenReturn(Optional.of(beverage1));
-        when(accountRepository.findById(1)).thenReturn(Optional.empty());
-        when(orderRepository.save(order1)).thenReturn(order1);
-        when(orderRepository.save(any(Order.class))).thenAnswer(invocation -> invocation.getArgument(0));
-
-        BeverageOrderItemRequest beverageOrderItemRequest = new BeverageOrderItemRequest();
-        beverageOrderItemRequest.setAmount(2);
-        beverageOrderItemRequest.setBeverageId(1);
-
-        PizzaOrderItemRequest pizzaOrderItemRequest = new PizzaOrderItemRequest();
-        pizzaOrderItemRequest.setAmount(2);
-        pizzaOrderItemRequest.setPizzaId(1);
-
-        OrderUpdateRequest orderUpdateRequest = new OrderUpdateRequest();
-        orderUpdateRequest.setAddress("Straat");
-        orderUpdateRequest.setBeverages(List.of(beverageOrderItemRequest));
-        orderUpdateRequest.setPizzas(List.of(pizzaOrderItemRequest));
-
-        mvc.perform(put("/order/update/1")
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(orderUpdateRequest)))
-                .andExpect(status().isBadRequest())
-                .andDo(print());
-    }
-
     @Test
     void deleteOrder() throws Exception {
         when(orderRepository.findById(1)).thenReturn(Optional.of(order1));

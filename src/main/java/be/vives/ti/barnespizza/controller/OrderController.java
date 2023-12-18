@@ -16,10 +16,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.Collections;
-import java.util.Date;
-import java.util.List;
-import java.util.Optional;
+import java.util.*;
 
 @RestController
 @RequestMapping("/order")
@@ -239,7 +236,7 @@ public class OrderController {
 
     private List<PizzaOrderResponse> convertPizzaOrderItems(List<PizzaOrderItem> pizzaOrderItems) {
         return Optional.ofNullable(pizzaOrderItems)
-                .orElse(Collections.emptyList())
+                .orElse(new ArrayList<>())
                 .stream()
                 .map(pizzaOrderItem -> new PizzaOrderResponse(pizzaOrderItem.getPizza(), pizzaOrderItem.getAmount()))
                 .toList();
@@ -247,7 +244,7 @@ public class OrderController {
 
     private List<BeverageOrderResponse> convertBeverageOrderItems(List<BeverageOrderItem> beverageOrderItems) {
         return Optional.ofNullable(beverageOrderItems)
-                .orElse(Collections.emptyList())
+                .orElse(new ArrayList<>())
                 .stream()
                 .map(beverageOrderItem -> new BeverageOrderResponse(beverageOrderItem.getBeverage(), beverageOrderItem.getAmount()))
                 .toList();
