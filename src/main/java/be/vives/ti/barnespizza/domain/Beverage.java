@@ -8,9 +8,9 @@ import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Positive;
 
+import java.util.List;
+
 @Entity
-@DiscriminatorValue("Beverage")
-@JsonIgnoreProperties("beverageOrderItem")
 @Table(name = "beverages")
 public class Beverage {
 
@@ -25,9 +25,9 @@ public class Beverage {
     @Positive(message = "Price must be a positive value")
     private Double price;
 
-    @Transient
-    @OneToOne
-    private BeverageOrderItem beverageOrderItem;
+
+    @OneToMany(mappedBy = "beverage", cascade = CascadeType.ALL)
+    private List<BeverageOrderItem> beverageOrderItems;
     protected Beverage(){
 
     }
@@ -60,11 +60,11 @@ public class Beverage {
     public void setPrice(Double price) {
         this.price = price;
     }
-    public BeverageOrderItem getBeverageOrderItem() {
-        return beverageOrderItem;
+    public List<BeverageOrderItem> getBeverageOrderItems() {
+        return beverageOrderItems;
     }
 
-    public void setBeverageOrderItem(BeverageOrderItem beverageOrderItem) {
-        this.beverageOrderItem = beverageOrderItem;
+    public void setBeverageOrderItems(List<BeverageOrderItem> beverageOrderItems) {
+        this.beverageOrderItems = beverageOrderItems;
     }
 }

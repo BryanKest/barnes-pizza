@@ -35,7 +35,7 @@ public class Account {
 
     @NotNull
     @Size(min = 2, max = 50, message = "First name must be between 2 and 50 characters long")
-    @Pattern(regexp = "^[a-zA-Z]+$", message = "First name must only contain letters")
+    @Pattern(regexp = "^[a-zA-Z ]+$", message = "First name must only contain letters")
     private String fname;
 
     @NotNull

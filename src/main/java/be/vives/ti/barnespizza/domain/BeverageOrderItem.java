@@ -4,7 +4,6 @@ import com.fasterxml.jackson.annotation.JsonManagedReference;
 import jakarta.persistence.*;
 
 @Entity
-@DiscriminatorValue("Beverage")
 @Table(name = "beverage_order_items")
 public class BeverageOrderItem {
 
@@ -19,7 +18,7 @@ public class BeverageOrderItem {
 
     private Integer amount;
 
-    @OneToOne
+    @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "beverage_id")
     private Beverage beverage;
 
