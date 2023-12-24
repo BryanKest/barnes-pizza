@@ -1,4 +1,4 @@
 -------------------------------------------------------------------------------
 Test set: be.vives.ti.barnespizza.controller.OrderControllerTest
 -------------------------------------------------------------------------------
-Tests run: 13, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 1.401 s - in be.vives.ti.barnespizza.controller.OrderControllerTest
+Tests run: 13, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 1.637 s - in be.vives.ti.barnespizza.controller.OrderControllerTest
